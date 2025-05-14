@@ -59,7 +59,9 @@ jobs:
                 IdentityFile ~/.ssh/id_rsa
                 ServerAliveInterval 30
                 ServerAliveCountMax 3
-                ExitOnForwardFailure yes" > ~/.ssh/config
+                ExitOnForwardFailure yes
+                StrictHostKeyChecking no
+                UserKnownHostsFile=/dev/null" > ~/.ssh/config
           echo "SSH setup completed at $(date)" | tee -a ~/logs/setup.log
 
       - name: Start Cloudflare Tunnel

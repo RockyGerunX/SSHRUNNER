@@ -10,11 +10,9 @@ jobs:
   ssh-tunnel:
     runs-on: ubuntu-latest
     steps:
-      # Checkout kode repositori
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Setup cache untuk menyimpan data
       - name: Cache Data
         id: cache-data
         uses: actions/cache@v4
@@ -26,38 +24,32 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-data-
 
-      # Install dependensi
       - name: Install Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y autossh openssh-server
-          # Install cloudflared
           wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -O /tmp/cloudflared
           sudo chmod +x /tmp/cloudflared
           sudo mv /tmp/cloudflared /usr/local/bin/cloudflared
 
-      # Setup direktori
       - name: Setup Directories
         run: |
           mkdir -p ~/data ~/logs
           echo "Data directory: ~/data" | tee -a ~/logs/setup.log
           echo "Logs directory: ~/logs" | tee -a ~/logs/setup.log
 
-      # Setup SSH server
       - name: Setup SSH Server
         run: |
-          # Konfigurasi SSH server untuk port 2222
-          sudo sed -i 's/#Port 22/Port 2222/' /etc/ssh/sshd_config
-          sudo systemctl restart ssh
-          # Verifikasi port 2222
-          sudo ss -tlnp | grep 2222 || { echo "SSH server gagal di port 2222"; exit 1; }
-          # Setup kunci SSH
+          sudo apt-get install -y openssh-server
+          echo "Port 2222" | sudo tee -a /etc/ssh/sshd_config
+          sudo systemctl restart sshd
+          sleep 2
+          sudo ss -tlnp | grep 2222 || { echo "SSH server gagal di port 2222"; sudo cat /var/log/syslog; exit 1; }
           if [ ! -f ~/.ssh/id_rsa ]; then
             ssh-keygen -t rsa -b 4096 -N "" -f ~/.ssh/id_rsa
           fi
           cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
           chmod 600 ~/.ssh/authorized_keys
-          # Konfigurasi autossh
           echo "Host tunnel
                 HostName localhost
                 User runner
@@ -68,7 +60,6 @@ jobs:
                 ExitOnForwardFailure yes" > ~/.ssh/config
           echo "SSH setup completed at $(date)" | tee -a ~/logs/setup.log
 
-      # Start Cloudflare Tunnel
       - name: Start Cloudflare Tunnel
         run: |
           nohup cloudflared tunnel --url ssh://localhost:2222 > ~/logs/cloudflared.log 2>&1 &
@@ -82,7 +73,6 @@ jobs:
           echo "Tunnel URL: $TUNNEL_URL" | tee -a ~/logs/tunnel.log
           echo "TUNNEL_URL=$TUNNEL_URL" >> $GITHUB_ENV
 
-      # Start Autossh
       - name: Start Autossh
         run: |
           nohup autossh -M 0 -N -o "ServerAliveInterval=30" -o "ServerAliveCountMax=3" tunnel > ~/logs/autossh.log 2>&1 &
@@ -95,7 +85,6 @@ jobs:
             exit 1
           fi
 
-      # Tampilkan informasi tunnel
       - name: Display Tunnel Info
         run: |
           echo "Tunnel aktif di: ${{ env.TUNNEL_URL }}:2222"
@@ -106,7 +95,6 @@ jobs:
           echo "Log Autossh:" | tee -a ~/logs/tunnel.log
           cat ~/logs/autossh.log | tee -a ~/logs/tunnel.log
 
-      # Keep alive 6 jam
       - name: Keep Alive for 6 Hours
         run: |
           END_TIME=$(( $(date +%s) + 6*60*60 ))
@@ -123,7 +111,6 @@ jobs:
           done
           echo "Keep alive selesai" | tee -a ~/logs/keep-alive.log
 
-      # Simpan log akhir
       - name: Save Final Logs
         if: always()
         run: |
@@ -131,6 +118,6 @@ jobs:
           echo "Setup Log:" | tee -a ~/logs/final.log
           cat ~/logs/setup.log | tee -a ~/logs/final.log
           echo "Tunnel Log:" | tee -a ~/logs/final.log
-          cat ~/logs/tunnel.log | tee -a ~/logs/final.log
+          [ -f ~/logs/tunnel.log ] && cat ~/logs/tunnel.log | tee -a ~/logs/final.log || echo "No tunnel log"
           echo "Keep Alive Log:" | tee -a ~/logs/final.log
-          cat ~/logs/keep-alive.log | tee -a ~/logs/final.log
+          [ -f ~/logs/keep-alive.log ] && cat ~/logs/keep-alive.log | tee -a ~/logs/final.log || echo "No keep-alive log"

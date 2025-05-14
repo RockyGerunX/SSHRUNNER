@@ -42,9 +42,9 @@ jobs:
         run: |
           sudo apt-get install -y openssh-server
           echo "Port 2222" | sudo tee -a /etc/ssh/sshd_config
-          sudo systemctl restart sshd
+          sudo systemctl restart ssh
           sleep 2
-          sudo ss -tlnp | grep 2222 || { echo "SSH server gagal di port 2222"; sudo cat /var/log/syslog; exit 1; }
+          sudo ss -tlnp | grep 2222 || { echo "SSH server gagal di port 2222"; sudo journalctl -u ssh; exit 1; }
           if [ ! -f ~/.ssh/id_rsa ]; then
             ssh-keygen -t rsa -b 4096 -N "" -f ~/.ssh/id_rsa
           fi

@@ -67,11 +67,13 @@ jobs:
       - name: Start Cloudflare Tunnel
         run: |
           nohup cloudflared tunnel --url ssh://localhost:2222 > ~/logs/cloudflared.log 2>&1 &
-          sleep 5
+          sleep 10
           TUNNEL_URL=$(grep -oP 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' ~/logs/cloudflared.log | head -n 1)
           if [ -z "$TUNNEL_URL" ]; then
             echo "Error: Tidak bisa mendapatkan URL tunnel"
             cat ~/logs/cloudflared.log
+            sudo netstat -tuln
+            pgrep cloudflared || echo "cloudflared tidak berjalan"
             exit 1
           fi
           echo "Tunnel URL: $TUNNEL_URL" | tee -a ~/logs/tunnel.log

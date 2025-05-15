@@ -15,6 +15,8 @@ pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
 def log(message, status="[INFO]"):
     timestamp = time.strftime("%H:%M:%S", time.localtime())
     print(f"{timestamp} {status} {message}")
+    with open('automation.log', 'a') as f:
+        f.write(f"{timestamp} {status} {message}\n")
 
 def handle_captcha(driver):
     max_attempts = 3
@@ -75,8 +77,8 @@ def handle_captcha(driver):
     return False
 
 def main():
-    log("Starting Zefoy CAPTCHA automation")
-    log("Current time: 07:46 AM WIB, Thursday, May 15, 2025")
+    log(f"Starting automation at {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}")
+    log("Current time: 07:51 AM WIB, Thursday, May 15, 2025")
     log("GitHub Runner Version: 2.323.0")
 
     log("Configuring Chrome for headless mode", "[WAITING]")
@@ -128,6 +130,7 @@ def main():
         log("Closing browser", "[WAITING]")
         driver.quit()
         log("Browser closed, automation finished", "[SUCCESS]")
+        log(f"Automation completed at {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}")
 
 if __name__ == "__main__":
     main()

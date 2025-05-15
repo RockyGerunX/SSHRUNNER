@@ -9,152 +9,125 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException,
 import pytesseract
 from PIL import Image
 from io import BytesIO
-from colorama import Fore, Style, init
 
-# Inisialisasi colorama untuk warna di terminal
-init()
-
-# Path untuk Tesseract OCR di Ubuntu
 pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
 
-# Status dan warna
-WAITING = f"{Fore.YELLOW}[WAITING] "
-SUCCESS = f"{Fore.GREEN}[SUCCESS] "
-INFO = f"{Fore.BLUE}[INFO] "
-WARNING = f"{Fore.RED}[WARNING] "
-
-# Fungsi untuk mencetak log dengan timestamp
-def log(message, status=INFO):
+def log(message, status="[INFO]"):
     timestamp = time.strftime("%H:%M:%S", time.localtime())
-    print(f"{timestamp} {status}{message}{Style.RESET_ALL}")
+    print(f"{timestamp} {status} {message}")
 
-# Fungsi untuk menangani CAPTCHA dengan progres
 def handle_captcha(driver):
     max_attempts = 3
     for attempt in range(1, max_attempts + 1):
-        log(f"Attempt {attempt}/{max_attempts} to solve CAPTCHA", WAITING)
+        log(f"Attempt {attempt}/{max_attempts} to solve CAPTCHA", "[WAITING]")
         try:
-            # Tunggu hingga elemen CAPTCHA muncul
-            log("Waiting for CAPTCHA image element", WAITING)
+            log("Waiting for CAPTCHA image element", "[WAITING]")
             captcha_image = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.XPATH, '/html/body/div[5]/div[2]/form/div/div/img'))
             )
-            log("CAPTCHA image detected", SUCCESS)
+            log("CAPTCHA image detected", "[SUCCESS]")
 
-            log("Waiting for CAPTCHA input element", WAITING)
+            log("Waiting for CAPTCHA input element", "[WAITING]")
             captcha_input = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.XPATH, '/html/body/div[5]/div[2]/form/div/div/div/input'))
             )
-            log("CAPTCHA input detected", SUCCESS)
+            log("CAPTCHA input detected", "[SUCCESS]")
 
-            log("Waiting for submit button", WAITING)
+            log("Waiting for submit button", "[WAITING]")
             submit_button = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, '/html/body/div[5]/div[2]/form/div/div/div/div/button'))
             )
-            log("Submit button detected", SUCCESS)
+            log("Submit button detected", "[SUCCESS]")
 
-            # Ambil screenshot gambar CAPTCHA
-            log("Capturing CAPTCHA image", WAITING)
+            log("Capturing CAPTCHA image", "[WAITING]")
             captcha_png = captcha_image.screenshot_as_png
             image = Image.open(BytesIO(captcha_png))
-            log("CAPTCHA image captured", SUCCESS)
+            log("CAPTCHA image captured", "[SUCCESS]")
 
-            # Baca teks dari gambar menggunakan Pytesseract
-            log("Processing CAPTCHA text with OCR", WAITING)
+            log("Processing CAPTCHA text with OCR", "[WAITING]")
             captcha_text = pytesseract.image_to_string(image, config='--psm 8 --oem 3').strip().lower()
-            log(f"Detected CAPTCHA text: {captcha_text}", SUCCESS)
+            log(f"Detected CAPTCHA text: {captcha_text}", "[SUCCESS]")
 
-            # Masukkan teks ke input dan submit
-            log("Entering CAPTCHA text", WAITING)
+            log("Entering CAPTCHA text", "[WAITING]")
             captcha_input.clear()
             captcha_input.send_keys(captcha_text)
             submit_button.click()
-            log("Submitted CAPTCHA", SUCCESS)
+            log("Submitted CAPTCHA", "[SUCCESS]")
 
-            # Verifikasi apakah CAPTCHA berhasil
-            log("Verifying CAPTCHA result", WAITING)
+            log("Verifying CAPTCHA result", "[WAITING]")
             try:
                 WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.ID, 'errorcapthcaclose')))
-                log("CAPTCHA verification failed", WARNING)
+                log("CAPTCHA verification failed", "[WARNING]")
                 return False
             except (TimeoutException, NoSuchElementException):
-                log("CAPTCHA passed successfully!", SUCCESS)
+                log("CAPTCHA passed successfully!", "[SUCCESS]")
                 return True
 
         except Exception as e:
-            log(f"Error handling CAPTCHA: {e}", WARNING)
+            log(f"Error handling CAPTCHA: {e}", "[WARNING]")
             if attempt == max_attempts:
                 return False
-            log(f"Retrying CAPTCHA in 2 seconds...", WAITING)
+            log("Retrying CAPTCHA in 2 seconds...", "[WAITING]")
             time.sleep(2)
             driver.refresh()
-            log("Page refreshed", SUCCESS)
+            log("Page refreshed", "[SUCCESS]")
 
     return False
 
-# Fungsi utama
 def main():
-    # Log informasi awal dengan waktu lokal (WIB)
-    log("Starting Zefoy CAPTCHA automation", INFO)
-    log(f"Current time: 07:42 AM WIB, Thursday, May 15, 2025", INFO)
-    log(f"GitHub Runner Version: 2.323.0", INFO)
+    log("Starting Zefoy CAPTCHA automation")
+    log("Current time: 07:46 AM WIB, Thursday, May 15, 2025")
+    log("GitHub Runner Version: 2.323.0")
 
-    # Konfigurasi Chrome Options untuk headless
-    log("Configuring Chrome for headless mode", WAITING)
+    log("Configuring Chrome for headless mode", "[WAITING]")
     chrome_options = Options()
     chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--disable-notifications")
     chrome_options.add_argument("--disable-popup-blocking")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    log("Chrome configuration completed", SUCCESS)
+    log("Chrome configuration completed", "[SUCCESS]")
 
-    # Inisialisasi driver dengan Chrome
-    log("Initializing Chrome driver", WAITING)
+    log("Initializing Chrome driver", "[WAITING]")
     driver = webdriver.Chrome(options=chrome_options)
-    log("Chrome driver initialized", SUCCESS)
+    log("Chrome driver initialized", "[SUCCESS]")
 
     try:
-        # Buka zefoy.com
-        log("Navigating to https://zefoy.com", WAITING)
+        log("Navigating to https://zefoy.com", "[WAITING]")
         driver.get('https://zefoy.com')
-        log("Successfully opened zefoy.com", SUCCESS)
+        log("Successfully opened zefoy.com", "[SUCCESS]")
 
-        # Tangani notifikasi jika muncul
-        log("Checking for notification alert", WAITING)
+        log("Checking for notification alert", "[WAITING]")
         try:
             WebDriverWait(driver, 5).until(EC.alert_is_present())
             alert = driver.switch_to.alert
             alert.accept()
-            log("Notification alert accepted", SUCCESS)
+            log("Notification alert accepted", "[SUCCESS]")
         except NoAlertPresentException:
-            log("No notification alert detected", INFO)
+            log("No notification alert detected", "[INFO]")
 
-        # Tangani pop-up iklan
-        log("Checking for ad popup", WAITING)
+        log("Checking for ad popup", "[WAITING]")
         try:
             ad_popup = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Oke') or contains(text(), 'Close')]"))
             )
             ad_popup.click()
-            log("Ad popup closed", SUCCESS)
+            log("Ad popup closed", "[SUCCESS]")
         except (TimeoutException, NoSuchElementException):
-            log("No ad popup detected or failed to close", INFO)
+            log("No ad popup detected or failed to close", "[INFO]")
 
-        # Ulangi proses CAPTCHA hingga berhasil
-        log("Starting CAPTCHA solving process", INFO)
+        log("Starting CAPTCHA solving process", "[INFO]")
         if handle_captcha(driver):
-            log("CAPTCHA process completed successfully", SUCCESS)
+            log("CAPTCHA process completed successfully", "[SUCCESS]")
         else:
-            log("Failed to pass CAPTCHA after maximum attempts", WARNING)
+            log("Failed to pass CAPTCHA after maximum attempts", "[WARNING]")
 
     except Exception as e:
-        log(f"Critical error occurred: {e}", WARNING)
+        log(f"Critical error occurred: {e}", "[WARNING]")
     finally:
-        # Tutup browser
-        log("Closing browser", WAITING)
+        log("Closing browser", "[WAITING]")
         driver.quit()
-        log("Browser closed, automation finished", SUCCESS)
+        log("Browser closed, automation finished", "[SUCCESS]")
 
 if __name__ == "__main__":
     main()

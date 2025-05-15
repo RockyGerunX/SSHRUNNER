@@ -1,0 +1,39 @@
+name: Run Zefoy CAPTCHA Solver
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  run-captcha-solver:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout kode
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Instal dependensi sistem
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser chromium-chromedriver tesseract-ocr libtesseract-dev
+          sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/bin/chromedriver
+
+      # Instal dependensi Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'  # Gunakan versi Python terbaru
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install selenium pytesseract pillow
+
+      # Jalankan skrip Python
+      - name: Run CAPTCHA Solver
+        run: |
+          python your_script_name.py  # Ganti dengan nama file skrip Anda

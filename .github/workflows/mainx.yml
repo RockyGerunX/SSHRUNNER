@@ -31,13 +31,15 @@ jobs:
       # Jalankan script dengan Xvfb dan simpan log
       - name: Run CAPTCHA automation with logs
         run: |
-          xvfb-run -a python Test.py > automation.log 2>&1
+          echo "Starting automation at $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> automation.log
+          xvfb-run -a python your_script.py >> automation.log 2>&1
+          echo "Automation completed at $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> automation.log
         env:
           DISPLAY: :99
 
       # Upload log sebagai artifact
       - name: Upload logs as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4  # Updated to v4
         with:
           name: automation-logs
           path: automation.log

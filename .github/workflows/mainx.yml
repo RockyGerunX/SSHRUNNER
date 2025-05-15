@@ -11,29 +11,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout kode
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Instal dependensi sistem
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y chromium-browser chromium-chromedriver tesseract-ocr libtesseract-dev
-          sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/bin/chromedriver
+          sudo apt-get install -y chromium-browser tesseract-ocr libtesseract-dev
+          [ -f /usr/bin/chromedriver ] || sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/bin/chromedriver
 
-      # Instal dependensi Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'  # Gunakan versi Python terbaru
+          python-version: '3.x'
 
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install selenium pytesseract pillow
 
-      # Jalankan skrip Python
       - name: Run CAPTCHA Solver
         run: |
-          python your_script_name.py  # Ganti dengan nama file skrip Anda
+          python your_script_name.py

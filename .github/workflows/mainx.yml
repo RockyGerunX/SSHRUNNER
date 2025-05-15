@@ -1,4 +1,4 @@
-name: Run Zefoy CAPTCHA Solver
+name: Zefoy CAPTCHA Automation with Logs
 
 on:
   push:
@@ -7,29 +7,37 @@ on:
   workflow_dispatch:
 
 jobs:
-  run-captcha-solver:
+  automate-captcha:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout kode
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y chromium-browser tesseract-ocr libtesseract-dev
-          [ -f /usr/bin/chromedriver ] || sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/bin/chromedriver
-
+      # Setup Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: '3.12'
 
-      - name: Install Python dependencies
+      # Instal dependensi
+      - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
+          sudo apt-get update
+          sudo apt-get install -y xvfb chromium-browser chromium-chromedriver tesseract-ocr libnss3 colorama
           pip install selenium pytesseract pillow
 
-      - name: Run CAPTCHA Solver
+      # Jalankan script dengan Xvfb dan simpan log
+      - name: Run CAPTCHA automation with logs
         run: |
-          python your_script_name.py
+          xvfb-run -a python Test.py > automation.log 2>&1
+        env:
+          DISPLAY: :99
+
+      # Upload log sebagai artifact
+      - name: Upload logs as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: automation-logs
+          path: automation.log
